@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>反応実験</title>
+<style>
+  body {
+    text-align: center;
+    font-family: sans-serif;
+    margin-top: 40px;
+  }
+
+  #box {
+    width: 220px;
+    height: 220px;
+    margin: 30px auto;
+    background: gray;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    border-radius: 12px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    margin: 8px;
+  }
+
+  #status, #result, #summary, #history {
+    font-size: 18px;
+    margin: 10px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>反応テスト</h2>
+
+<p>緑色になったら、四角をすぐ押してください。</p>
+<p>全部で <strong>5回</strong> 行います。</p>
+
+<div id="status">スタートボタンを押してください</div>
+
+<div id="box">待機中</div>
+
+<button onclick="startExperiment()">スタート</button>
+<button onclick="resetExperiment()">リセット</button>
+
+<p id="result"></p>
+<p id="history"></p>
+<p id="summary"></p>
+
+<script>
+let startTime = null;
+let trialCount = 0;
+let totalTrials = 5;
+let reactionTimes = [];
+let waiting = false;
+let finished = false;
+
+function startExperiment() {
+  if (finished) return;
+
+  if (waiting) {
+    document.getElementById("status").textContent =
+      "緑になるまで待ってください";
+    return;
+  }
+
+  trialCount++;
+
+  document.getElementById("status").textContent =
+    trialCount + "回目 / " + totalTrials + "回中　準備中...";
+
+  document.getElementById("box").style.background = "gray";
+  document.getElementById("box").textContent = "待ってください";
+  document.getElementById("result").textContent = "";
+
+  waiting = true;
+
+  let delay = Math.random() * 3000 + 2000;
+
+  setTimeout(() => {
+    if (finished) return;
+
+    document.getElementById("box").style.background = "green";
+    document.getElementById("box").textContent = "押してください！";
+    document.getElementById("status").textContent =
+      trialCount + "回目：今押してください";
+
+    startTime = new Date().getTime();
+    waiting = false;
+  }, delay);
+}
+
+document.getElementById("box").onclick = function() {
+  if (finished) return;
+
+  if (!startTime) {
+    document.getElementById("result").textContent =
+      "まだ押さないでください。緑になってから押してください。";
+    return;
+  }
+
+  let reactionTime = new Date().getTime() - startTime;
+  reactionTimes.push(reactionTime);
+
+  let seconds = (reactionTime / 1000).toFixed(3);
+
+  document.getElementById("result").textContent =
+    trialCount + "回目の反応時間: " + seconds + " 秒";
+
+  startTime = null;
+
+  document.getElementById("box").style.background = "gray";
+  document.getElementById("box").textContent = "記録しました";
+
+  // 履歴表示
+  let historyText = "";
+  reactionTimes.forEach((t, i) => {
+    historyText += (i + 1) + "回目: " + (t / 1000).toFixed(3) + " 秒<br>";
+  });
+  document.getElementById("history").innerHTML = historyText;
+
+  let remaining = totalTrials - trialCount;
+
+  if (remaining > 0) {
+    document.getElementById("status").textContent =
+      "残り " + remaining + "回です。スタートを押してください。";
+  } else {
+    finishExperiment();
+  }
+};
+
+function finishExperiment() {
+  finished = true;
+
+  let sum = reactionTimes.reduce((a, b) => a + b, 0);
+  let average = (sum / reactionTimes.length / 1000).toFixed(3);
+
+  document.getElementById("status").textContent = "実験完了です";
+  document.getElementById("box").style.background = "blue";
+  document.getElementById("box").textContent = "完了";
+  document.getElementById("summary").textContent =
+    "平均反応時間: " + average + " 秒";
+}
+
+function resetExperiment() {
+  startTime = null;
+  trialCount = 0;
+  reactionTimes = [];
+  waiting = false;
+  finished = false;
+
+  document.getElementById("status").textContent =
+    "スタートボタンを押してください";
+  document.getElementById("box").style.background = "gray";
+  document.getElementById("box").textContent = "待機中";
+  document.getElementById("result").textContent = "";
+  document.getElementById("summary").textContent = "";
+  document.getElementById("history").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
